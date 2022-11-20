@@ -1,11 +1,26 @@
-from grid import Grid
+import numpy as np
+from BestFirstWithAnnealing import BestFirstWithAnnealing
+from Grid import Grid
 
 
 def main():
-    new_grid = Grid(10)
-    test= new_grid.create_new_rectangle()
-    print(test[0])
-    print(test[1])
+    bestfirst = BestFirstWithAnnealing(grid_size=6, sample_size=20, annealing_params=[0.5,-5] )
+    bestfirst.run()
+    print("rec id: ", bestfirst.grid.rectangle_id)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

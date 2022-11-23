@@ -3,28 +3,25 @@ import matplotlib
 import matplotlib.pyplot as plt
 from Rectangle import Rectangle
 
-# colour_names= ["black", "silver", "antiquewhite", "blue", "brown", "cadetblue", "chartreuse", "cyan", "darkblue",
-#                "darkcyan", "gold", "darkorchid", "orange", "olive", "yellow", "steelblue", "dodgerblue", "pink",
-#                "green", "lime", "turquoise", "purple", "magenta", "red", "dimgrey", "palegreen", "indigo", "lightblue",
-#                "plum"]
-
 
 
 class Grid:
     def __init__(self, size):
         self.size = size
         self.grid = np.zeros((size, size)).astype(int)
-        self.rectangle_id = 1
-        self.mondrian_score = 0
+        self.rectangle_id = 1 # rect id shows the id of the NEXT rectangle i.e. it is 1 for an empty grid - too late to change
         self.candidate_places = self._create_list_of_candidate_plc()
         self.available_dimensions = np.full((size, size), True)
         self.rectangle_area_list = []
 
 
-    def create_new_rectangle(self):
+    def create_new_rectangle(self, attempts=0):
 
-        found_rectangle = False
-        while not found_rectangle:
+
+        # print(f"attempt")
+
+        while attempts < 100:
+
             first_point = self._select_random_first_point()
             # print("first point: ", first_point)
             column_below = self.grid[first_point[0]:, first_point[1]] #this includes the point itself (for unit height rectangles)
@@ -46,6 +43,8 @@ class Grid:
             # find a different point if there is no available space below (taking into account that some dimensions may have
             # already been used)
             if available_space_below.size == 0:
+                attempts +=1
+                # print("continue")
                 continue
             # choose a random avaialble height
             index = np.random.randint(0, available_space_below.size)
@@ -56,7 +55,6 @@ class Grid:
             rows_right = self.grid[first_point[0]:first_point[0]+height, first_point[1]:]
             # print("rows right: ", rows_right)
             other_rectangles_right = np.nonzero(np.any(rows_right ,axis=0 ))
-            print(np.all(rows_right ,axis=0 ))
             # print("other rect right: ",other_rectangles_right)
             if other_rectangles_right[0].size != 0:
                 # only first row of free space as the second is redundant at this point
@@ -69,16 +67,17 @@ class Grid:
             available_space_right = free_space_right[available_second_dimension]
 
             if available_space_right.size == 0:
+                attempts += 1
+                # print("continue")
                 continue
             #choose a random avaialble width
             index =  np.random.randint(0, available_space_right.size)
             width = available_space_right[index] + 1
             # print("width", width)
 
-            found_rectangle = True
+            return Rectangle(first_point[0],first_point[1], height, width)
 
-        return Rectangle(first_point[0],first_point[1], height, width)
-
+        return None
 
     def add_rectangle(self,rectangle):
 
@@ -87,13 +86,16 @@ class Grid:
         width = rectangle.width
         height = rectangle.height
 
-        print(f"added: x: {fp_x}, y: {fp_y}, h: {height}, w: {width}")
+        # print(f"added: x: {fp_x}, y: {fp_y}, h: {height}, w: {width}")
 
         self.grid[fp_x:fp_x + height, fp_y:fp_y + width] = self.rectangle_id
         self.candidate_places = self._create_list_of_candidate_plc()
         self.rectangle_area_list.append(rectangle.area)
         self.rectangle_area_list.sort()
         self.rectangle_id += 1
+        self.available_dimensions[width - 1, height -1] = False
+        self.available_dimensions[height -1, width - 1] = False
+
 
     def get_potential_mond_score(self, area):
         smallest = self.rectangle_area_list[0]
@@ -122,7 +124,7 @@ class Grid:
         ax.set_xticklabels(labels)
         ax.set_yticklabels(labels)
 
-        my_cmap = matplotlib.cm.get_cmap('gist_rainbow')
+        my_cmap = matplotlib.cm.get_cmap('rainbow')
         my_cmap.set_under('w')
         ax.imshow(self.grid, vmin=.001, vmax=self.rectangle_id, cmap=my_cmap)
         plt.show()

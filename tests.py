@@ -10,5 +10,6 @@ arr2 = arr[4:]
 #     print(np.nonzero(arr2)[0][0])
 
 
-rows = [[0,0,1,1],[0,2,0,0]]
-print(np.argmax(rows, axis=0))
+rows = np.array([0,0,0,0])
+
+print(rows[rows>10].size)

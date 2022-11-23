@@ -5,7 +5,7 @@ import numpy as np
 
 class BestFirstWithAnnealing:
     def __init__(self, grid_size, sample_size,
-                 annealing_params, exponential_annealing_schedule = False):
+                 annealing_params , exponential_annealing_schedule = False):
         self.grid = Grid(grid_size)
         self.sample_size = sample_size
         self.exponential_annealing_schedule = exponential_annealing_schedule
@@ -25,40 +25,74 @@ class BestFirstWithAnnealing:
 
 
     def one_rectangle_addition(self):
-
+        added = False
         if self.grid.rectangle_id == 1:
             self.grid.add_rectangle(self.grid.create_new_rectangle())
+            added = True
+            return added
         else:
             sample = self._create_sample()
-            print(f"potential scores: {sample[:,-1]}" )
+            if sample.size == 0:
+                return added
+
+
+            # print(f"potential scores: {sample[:,-1]}" )
             temperature = self._get_temperature()
             added_temp = self._add_temperature(sample, temperature)
-            print(f"potential scores + temp: {added_temp[:, -1]}")
+            # print(f"potential scores + temp: {added_temp[:, -1]}")
             best_rectangle = self._choose_best_rectangle(added_temp)
 
             self.grid.add_rectangle(best_rectangle)
+            added = True
+            return added
 
     def run(self):
-        mond_scores = [0]
+        #return -1 if stuck
+        final_mond_score = -1
+        mond_scores = []
         temperatures = []
         while self.grid.candidate_places.size != 0:
-            self.one_rectangle_addition()
-            if self.grid.rectangle_id > 1:
-                mond_score = self.grid.get_mondrian_score()
-                print(f"Mondrian score: {mond_score}" )
-                mond_scores.append(mond_score)
+            # print(f"rectangle id {self.grid.rectangle_id}")
+            added = self.one_rectangle_addition()
+            if not added:
+                # self.grid.show_grid()
+                return final_mond_score
+            # self.grid.show_grid()
+            # print(f"rectangle id {self.grid.rectangle_id}")
+            # print(f"mond socre: {self.grid.get_mondrian_score()}")
+
+            mond_score = self.grid.get_mondrian_score()
+            # print(f"Mondrian score: {mond_score}" )
+            mond_scores.append(mond_score)
 
             temperatures.append(self._get_temperature())
-            self.grid.show_grid()
+            # self.grid.show_grid()
 
-        print(f"Final Mondrian score: {self.grid.get_mondrian_score()}")
-        plt.figure()
-        plt.plot(np.arange(self.grid.rectangle_id), mond_scores, 'b', label="Mondrian score")
+        final_mond_score = self.grid.get_mondrian_score()
+        self.grid.show_grid()
+        # print(f"Mondrian score: {final_mond_score}")
+        fig, ax = plt.subplots(1, 1, figsize=(5, 5))
+        # print(f"mond scores: {mond_scores}")
+        plt.plot(np.arange(self.grid.rectangle_id-1), mond_scores, 'b', label="Grid score")
         plt.plot(np.arange(self.grid.rectangle_id-1), temperatures, 'r', label="Temperature")
+
+        labels = [str(i) for i in range(1, self.grid.rectangle_id)]
+        ax.set_xticks([i for i in range(self.grid.rectangle_id-1)])
+        ax.set_xticklabels(labels)
+
+        plt.ylabel('Mondrian score')
+        plt.xlabel('No of rectangles on the grid')
+        plt.legend()
         plt.show()
+        return final_mond_score
+
 
     def _create_sample(self):
-        rectangles = set(self.grid.create_new_rectangle() for i in range(self.sample_size))
+        rectangles = set( self.grid.create_new_rectangle() for i in range(self.sample_size))
+        rectangles.discard(None)
+        if len(rectangles) == 0:
+            return np.array([])
+
         # each rectangle is a row of 1st point x,1st point y, width, height, area
         rectangles_arr  = np.stack((r.to_arr() for r in rectangles), axis=0 )
         scores = np.array(list(map(self.grid.get_potential_mond_score, rectangles_arr[:,4])))[:, None]
@@ -75,7 +109,7 @@ class BestFirstWithAnnealing:
         if best_rectangle.ndim>1:
             best_rectangle = best_rectangle[np.random.randint(0, best_rectangle.shape[0])]
 
-        print(f"best recangles socre: { best_rectangle[5]} ", )
+        # print(f"best recangles socre: { best_rectangle[5]} ", )
         return Rectangle(*best_rectangle[:4].tolist())
 
     def _get_temperature(self):
@@ -92,7 +126,7 @@ class BestFirstWithAnnealing:
         return variance if variance > 0 else 0
 
     def _get_exp_schedule_variance(self):
-        return self.param_1 * np.e ** ((self.grid.rectangle_id - 1) + self.param_2)
+        return self.param_1 * np.exp(-(self.grid.rectangle_id - 1) - self.param_2)
 
 
 

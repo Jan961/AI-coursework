@@ -1,22 +1,13 @@
 import numpy as np
 from BestFirstWithAnnealing import BestFirstWithAnnealing
 from Grid import Grid
+from RandomSearch import RandomSearch
 
 
 def main():
-    bestfirst = BestFirstWithAnnealing(grid_size=6, sample_size=20, annealing_params=[0.5,-5] )
-    bestfirst.run()
-    print("rec id: ", bestfirst.grid.rectangle_id)
-
-
-
-
-
-
-
-
-
-
+    search = RandomSearch(epochs=1000, grid_size=8, sample_size=30, annealing_params=[1, +100],
+                          exponential_annealing_schedule = True  )
+    search.search()
 
 
 

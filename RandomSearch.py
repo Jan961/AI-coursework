@@ -13,6 +13,7 @@ class RandomSearch():
 
     def search(self):
         scores = []
+        best_score = 1000
         for i in range(self.epochs):
             one_search = BestFirstWithAnnealing(self.grid_size, self.sample_size, self.annealing_params,
                                                 self.exponential_annealing_schedule)
@@ -22,7 +23,13 @@ class RandomSearch():
                 print("stuck")
             else:
                 print("found sol")
-                scores.append(one_search_result)
+                found_score = one_search_result[0]
+                grid= one_search_result[1]
+                scores.append(found_score)
+                if found_score < best_score:
+                    best_score = found_score
+                    grid.show_grid()
+
         print( scores)
         print(f"best Mondrian sc: {sorted(scores)[0]}")
         print(f"completed grids:{len(scores)}")

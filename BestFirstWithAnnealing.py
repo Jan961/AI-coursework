@@ -69,22 +69,22 @@ class BestFirstWithAnnealing:
             # self.grid.show_grid()
 
         final_mond_score = self.grid.get_mondrian_score()
-        self.grid.show_grid()
+        # self.grid.show_grid()
         # print(f"Mondrian score: {final_mond_score}")
-        fig, ax = plt.subplots(1, 1, figsize=(5, 5))
+        # fig, ax = plt.subplots(1, 1, figsize=(5, 5))
         # print(f"mond scores: {mond_scores}")
-        plt.plot(np.arange(self.grid.rectangle_id-1), mond_scores, 'b', label="Grid score")
-        plt.plot(np.arange(self.grid.rectangle_id-1), temperatures, 'r', label="Temperature")
+        # plt.plot(np.arange(self.grid.rectangle_id-1), mond_scores, 'b', label="Grid score")
+        # plt.plot(np.arange(self.grid.rectangle_id-1), temperatures, 'r', label="Temperature")
 
-        labels = [str(i) for i in range(1, self.grid.rectangle_id)]
-        ax.set_xticks([i for i in range(self.grid.rectangle_id-1)])
-        ax.set_xticklabels(labels)
-
-        plt.ylabel('Mondrian score')
-        plt.xlabel('No of rectangles on the grid')
-        plt.legend()
-        plt.show()
-        return final_mond_score
+        # labels = [str(i) for i in range(1, self.grid.rectangle_id)]
+        # ax.set_xticks([i for i in range(self.grid.rectangle_id-1)])
+        # ax.set_xticklabels(labels)
+        #
+        # plt.ylabel('Mondrian score')
+        # plt.xlabel('No of rectangles on the grid')
+        # plt.legend()
+        # plt.show()
+        return (final_mond_score, self.grid)
 
 
     def _create_sample(self):

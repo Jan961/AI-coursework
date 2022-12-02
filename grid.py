@@ -11,7 +11,7 @@ class Grid:
         self.grid = np.zeros((size, size)).astype(int)
         self.rectangle_id = 1 # rect id shows the id of the NEXT rectangle i.e. it is 1 for an empty grid - too late to change
         self.candidate_places = self._create_list_of_candidate_plc()
-        self.available_dimensions = np.full((size, size), True)
+        self.available_dimensions = self._initialise_dimensions()
         self.rectangle_area_list = []
 
 
@@ -141,3 +141,8 @@ class Grid:
         first_point_index = np.random.randint(0, self.candidate_places.shape[0])
         first_point = self.candidate_places[first_point_index,:]
         return (first_point[0], first_point[1])
+
+    def _initialise_dimensions(self):
+        d =  np.full((self.size, self.size), True)
+        d[self.size -1, self.size -1] = False
+        return d

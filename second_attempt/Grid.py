@@ -10,7 +10,7 @@ class Grid:
         self.coords_list = self._initialise_coord_list() # each entry: top row coord, bottom row, left column, right col
         self.available_dimensions = self._initialise_dimensions()
         self.rectangle_list = np.array([size, size, size*size])[None,:] # each entry: height, width, area
-        self.no_rectangles = 1 # = rectangle id +1
+        self.no_rectangles = 1 # equals rectangle id +1
         self.is_valid = True
 
     def get_state(self):
@@ -20,9 +20,10 @@ class Grid:
         return np.max(self.rectangle_list[:,2]) - np.min(self.rectangle_list[:,2])
 
 
-    # no checking if the paramentes are right - e.g. new_side > old side
+    # no checking if the paramentes are valid - e.g. new_side > old side
+    #assuming that the new_side 1 is always on the left or at the top
     # rectangle id indexed from 0
-    def split_rectangle(self, rectangle_id, new_side1, vertical= True):
+    def cleave_rectangle(self, rectangle_id, new_side1, vertical):
 
         self.grid = np.where(self.grid > rectangle_id, self.grid +1, self.grid)
         old_s = self.rectangle_list[rectangle_id][:2] #sides (dimensions) of the old rectangle
@@ -72,6 +73,47 @@ class Grid:
             self.rectangle_list = np.insert(self.rectangle_list, rectangle_id + 1,
                                             [new_side2, old_s[1], new_side2 * old_s[1]], axis=0)
 
+    # not checking if the parameters are valid
+    def merge_rectangles(self, r_id_1, r_id_2, vertical):
+
+        ids = sorted([r_id_1, r_id_2])
+        self.grid = np.where(self.grid > ids[1], self.grid -1, self.grid)
+        self.grid = np.where(self.grid == ids[0] + 1, ids[0], self.grid)
+
+        dims1= self.rectangle_list[r_id_1][:2]
+        dims2 = self.rectangle_list[r_id_2][:2]
+
+        if not self._check_validity_merge(dims1, dims2, vertical):
+            self.is_valid = False
+
+        self.available_dimensions[[dims1[0]-1,dims1[1]-1,dims2[0]-1,dims2[1]-1],
+                                  [dims1[1]-1,dims1[0]-1,dims2[1]-1, dims2[0]-1]] = True
+
+        if vertical:
+            new_h = dims1[0]
+            new_w = dims1[1] + dims2[1]
+
+            column_coords = np.sort(np.concatenate((self.coords_list[r_id_1][2:],
+                                                    self.coords_list[r_id_2][2:])))[[0, -1]]
+            row_coords = self.coords_list[r_id_1][[0, 1]]
+
+        else:
+            new_h =  dims1[0] + dims2[0]
+            new_w = dims1[1]
+
+            column_coords = self.coords_list[r_id_1][[2, 3]]
+            row_coords = np.sort(np.concatenate((self.coords_list[r_id_1][:3],
+                                                    self.coords_list[r_id_2][:3])))[[0, -1]]
+
+
+        self.available_dimensions[[new_h - 1, new_w - 1], [new_w - 1, new_h - 1]] = False
+
+        self.coords_list[ids[0]] = [row_coords[0], row_coords[1], column_coords[0], column_coords[1]]
+        self.coords_list = np.delete(self.coords_list, ids[1], axis=0)
+
+        self.rectangle_list[ids[0]] = [new_h, new_w, new_h*new_w]
+        self.rectangle_list = np.delete(self.rectangle_list, ids[1], axis=0)
+        self.no_rectangles -=1
 
 
 
@@ -79,8 +121,6 @@ class Grid:
 
 
 
-
-        
     def show_grid(self):
 
         fig, ax = plt.subplots(1, 1, figsize=(4,4))
@@ -109,21 +149,33 @@ class Grid:
         return np.array([[x, y, x, y]])
 
     def _check_validity_split(self, old_dims, new_side1, vertical):
-        # - 1 because the available dims grid is indexed from 0
+        # - 1 everywhere because the available dims grid is indexed from 0
         if vertical:
+            if old_dims[1] == 2*new_side1:
+                return False
             r1 = [old_dims[0]-1, new_side1-1]
             r2 = [old_dims[0]-1, old_dims[1] - new_side1-1]
 
         else:
+            if old_dims[0] == 2 * new_side1:
+                return False
             r1 = [new_side1-1, old_dims[1]-1]
             r2 = [old_dims[1] - new_side1-1, old_dims[1]-1]
 
         bools = self.available_dimensions[[r1[0],r1[1],r2[0],r2[1]],[r1[1],r1[0],r2[1],r2[0]]]
         return not np.any(np.invert(bools))
 
+    def _check_validity_merge(self, dims1, dims2, vertical):
 
+        if vertical:
+            h = dims1[0] -1
+            w = dims1[1] + dims2[1] -1
 
+        else:
+            h = dims1[0] + dims2[0] - 1
+            w = dims1[1] - 1
 
+        return self.available_dimensions[h,w]
 
 
 

@@ -26,30 +26,65 @@ class Grid:
     def get_Mond_score(self):
         return np.max(self.rectangle_list[:,2]) - np.min(self.rectangle_list[:,2])
 
+    #args are: rectangle_id, first_side, vertical if split == True
+    # frist_rcetangle_id, second_recangle_id, vertical if split == False
     def get_potential_state(self, split=True, *args):
-        pass
+
+        rect_list = copy.deepcopy(self.rectangle_list)
+
+        if split:
+            h1, w1, h2, w2 = self._get_new_dims_split(args[0], args[1], args[2])
+
+            rect_list[args[0]][0], rect_list[args[0]][1],rect_list[args[0]][2] = h1, w1, h1*w1
+            rect_list = np.insert(rect_list, 0, [h2, w2, h2*w2], axis=0)
+
+        else:
+            new_h, new_w = self._get_new_dims_merge(args[0], args[1], args[2])
+
+            rect_list[args[0]][0], rect_list[args[0]][1], rect_list[args[0]][2] = new_h, new_w, new_h*new_w
+            rect_list = np.delete(rect_list, args[1], 0)
+
+        Mondrian = np.max(rect_list[:,2]) - np.min(rect_list[:,2])
+        valid = self._check_list_validity(rect_list)
+        no_rectangles= rect_list.shape[0]
+
+        return State(no_rectangles, Mondrian, valid)
+
+    # I started too late to have time to think how to optimise the below function
+
+    # here and in all other functions below horizontal merge means, perhaps counterintuitively,
+    # that the dividing line that disappears when the rectangles are merged is horizontal
+    #and likewise for vertical
+    def get_lists_to_merge(self):
+        vertical = []
+        horizontal = []
+        for i in range(self.coords_list.shape[0]):
+            c11 = self.coords_list[i,2]
+            c12 = self.coords_list[i,3]
+            r11 = self.coords_list[i,0]
+            r12 = self.coords_list[i,1]
+            for j in range(self.coords_list.shape[0]):
+                if j == i:
+                    continue
+                c21 = self.coords_list[j, 2]
+                c22 = self.coords_list[j, 3]
+                r21 = self.coords_list[j, 0]
+                r22 = self.coords_list[j, 1]
+
+                if c11 == c21 and c12 == c22 and r11 == r22 + 1:
+                    horizontal.append([i,j])
+                elif r11 == r21 and r12 == r22 and c12 +1 == c21:
+                    vertical.append([i,j])
+
+        return vertical, horizontal
 
 
-    def get_potential_validity_split(self, rectangle_id, new_side1, vertical):
-        rect_list = copy.deepcopy(self.rectangle_list[:,:2])
-
-        h1, w1, h2, w2 = self._get_new_dims_split(rectangle_id, new_side1, vertical)
-
-        rect_list[rectangle_id][0], rect_list[rectangle_id][1] = h1, w1
-        rect_list = np.insert(rect_list, 0,[h2, w2], axis=0 )
-
-        return self._check_list_validity(rect_list)
 
 
 
-    def get_potential_validity_merge(self, r_id_1, r_id_2, vertical):
-        rect_list = copy.deepcopy(self.rectangle_list[:, :2])
 
-        new_h, new_w = self._get_new_dims_merge(r_id_1, r_id_2, vertical)
+            
 
-        rect_list[r_id_1][0], rect_list[r_id_1][1] = new_h, new_w
-        rect_list= np.delete(rect_list, r_id_2, 0)
-        return self._check_list_validity(rect_list)
 
 
 
@@ -167,11 +202,11 @@ class Grid:
     def _get_new_dims_merge(self, r_id_1, r_id_2, vertical):
 
         if vertical:
-            new_h = self.rectangle_list[r_id_1][0] +  self.rectangle_list[r_id_2][0]
-            new_w = self.rectangle_list[r_id_1][0]
-        else:
             new_h = self.rectangle_list[r_id_1][0]
             new_w = self.rectangle_list[r_id_1][1] +  self.rectangle_list[r_id_2][1]
+        else:
+            new_h = self.rectangle_list[r_id_1][0] +  self.rectangle_list[r_id_2][0]
+            new_w = self.rectangle_list[r_id_1][1]
 
         return new_h, new_w
 

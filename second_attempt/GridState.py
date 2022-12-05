@@ -1,6 +1,5 @@
 
-
-class State:
+class GridState:
     def __init__(self, no_rectangles, Mond_score, is_valid):
         self.no_rectangles= no_rectangles
         self.Mond_score = Mond_score

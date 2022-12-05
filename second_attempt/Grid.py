@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
-from State import State
+from GridState import GridState
 import copy
 
 class Grid:
@@ -13,22 +13,29 @@ class Grid:
         self.no_rectangles = 1 # equals rectangle id +1
         self.is_valid = False
 
+
     def check_is_valid(self):
+        if self.no_rectangles == 1:
+            return False
+
         ordered = np.sort(self.rectangle_list[:,:2], axis=1)
         # hard-coded 100 but could easily be adapted to work for any grid size if I started this exercise earlier
         added = ordered[:,0]*100 + ordered[:,1]
         return np.unique(added).size == added.size
 
 
-    def get_state(self):
-        return State(self.no_rectangles, self.get_Mond_score(), self.is_valid)
+    def get_grid_state(self):
+        return GridState(self.no_rectangles, self.get_Mond_score(), self.is_valid)
 
     def get_Mond_score(self):
-        return np.max(self.rectangle_list[:,2]) - np.min(self.rectangle_list[:,2])
+        if self.no_rectangles ==1:
+            return self.size**2 - 1
+        else:
+            return np.max(self.rectangle_list[:,2]) - np.min(self.rectangle_list[:,2])
 
     #args are: rectangle_id, first_side, vertical if split == True
     # frist_rcetangle_id, second_recangle_id, vertical if split == False
-    def get_potential_state(self, split=True, *args):
+    def get_potential_grid_state(self, *args, split=True):
 
         rect_list = copy.deepcopy(self.rectangle_list)
 
@@ -48,7 +55,7 @@ class Grid:
         valid = self._check_list_validity(rect_list)
         no_rectangles= rect_list.shape[0]
 
-        return State(no_rectangles, Mondrian, valid)
+        return GridState(no_rectangles, Mondrian, valid)
 
     # I started too late to have time to think how to optimise the below function
 
@@ -81,15 +88,7 @@ class Grid:
 
 
 
-
-
-            
-
-
-
-
-    # no checking if the paramentes are valid - e.g. new_side > old side
-    #assuming that the new_side 1 is always on the left or at the top
+    # not checking if the paramentes are valid - e.g. new_side > old side
     # rectangle id indexed from 0
     def cleave_rectangle(self, rectangle_id, new_side1, vertical):
 
@@ -101,21 +100,19 @@ class Grid:
         h1, w1, h2, w2 = self._get_new_dims_split(rectangle_id, new_side1, vertical)
 
         if vertical:
-            new_side2 = self.rectangle_list[rectangle_id][1] - new_side1
-            self.coords_list[rectangle_id][3] = self.coords_list[rectangle_id][2] + new_side1 - 1
+            self.coords_list[rectangle_id][3] = self.coords_list[rectangle_id][2] + w1 - 1
             coords = self.coords_list[rectangle_id] # coords of the new rectangle on the left
-            self.grid[coords[0]:coords[1]+1,coords[3] + 1:coords[3] + 1 + new_side2] = rectangle_id + 1
+            self.grid[coords[0]:coords[1]+1,coords[3] + 1:coords[3] + 1 + w2] = rectangle_id + 1
             self.coords_list = np.insert(self.coords_list,
-                      rectangle_id +1, [coords[0], coords[1], coords[3] + 1, coords[3] + new_side2 ], axis=0)
+                      rectangle_id +1, [coords[0], coords[1], coords[3] + 1, coords[3] + w2 ], axis=0)
 
 
         else:
-            new_side2 = self.rectangle_list[rectangle_id][0] - new_side1
-            self.coords_list[rectangle_id][1] = self.coords_list[rectangle_id][0] + new_side1 - 1
+            self.coords_list[rectangle_id][1] = self.coords_list[rectangle_id][0] + h1 - 1
             coords = self.coords_list[rectangle_id]  # coords of the new rectangle at the top
-            self.grid[coords[1]+1: coords[1] + 1 + new_side2, coords[2] :coords[3] + 1] = rectangle_id + 1
+            self.grid[coords[1]+1: coords[1] + 1 + h2, coords[2] :coords[3] + 1] = rectangle_id + 1
             self.coords_list = np.insert(self.coords_list,
-                      rectangle_id + 1, [coords[1]+1, coords[1] + new_side2, coords[2], coords[3]], axis=0)
+                      rectangle_id + 1, [coords[1]+1, coords[1] + h2, coords[2], coords[3]], axis=0)
 
 
         self.rectangle_list[rectangle_id][0], self.rectangle_list[rectangle_id][1],\
@@ -143,8 +140,8 @@ class Grid:
 
         else:
             column_coords = self.coords_list[r_id_1][[2, 3]]
-            row_coords = np.sort(np.concatenate((self.coords_list[r_id_1][:3],
-                                                    self.coords_list[r_id_2][:3])))[[0, -1]]
+            row_coords = np.sort(np.concatenate((self.coords_list[r_id_1][:2],
+                                                    self.coords_list[r_id_2][:2])))[[0, -1]]
 
 
         self.coords_list[ids[0]] = [row_coords[0], row_coords[1], column_coords[0], column_coords[1]]
@@ -171,7 +168,7 @@ class Grid:
         ax.set_xticklabels(labels)
         ax.set_yticklabels(labels)
 
-        my_cmap = matplotlib.cm.get_cmap('rainbow')
+        my_cmap = matplotlib.cm.get_cmap('prism')
         ax.imshow(self.grid, vmin=0, vmax=self.no_rectangles -1, cmap=my_cmap)
         plt.show()
 
@@ -183,6 +180,9 @@ class Grid:
         return np.array([[x, y, x, y]])
 
     def _check_list_validity(self, rectangle_list):
+        # print(f"rectangle list: {rectangle_list}, shape: {rectangle_list.shape[0]}" )
+        if rectangle_list.shape[0] == 1:
+            return False
         ordered = np.sort(rectangle_list, axis=1)
         added = ordered[:, 0] * 100 + ordered[:, 1]
         return np.unique(added).size == added.size

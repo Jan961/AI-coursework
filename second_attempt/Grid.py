@@ -28,7 +28,7 @@ class Grid:
         return GridState(self.no_rectangles, self.get_Mond_score(), self.is_valid)
 
     def get_Mond_score(self):
-        if self.no_rectangles ==1:
+        if self.no_rectangles == 1:
             return self.size**2 - 1
         else:
             return np.max(self.rectangle_list[:,2]) - np.min(self.rectangle_list[:,2])
@@ -168,7 +168,7 @@ class Grid:
         ax.set_xticklabels(labels)
         ax.set_yticklabels(labels)
 
-        my_cmap = matplotlib.cm.get_cmap('prism')
+        my_cmap = matplotlib.cm.get_cmap('gist_rainbow')
         ax.imshow(self.grid, vmin=0, vmax=self.no_rectangles -1, cmap=my_cmap)
         plt.show()
 

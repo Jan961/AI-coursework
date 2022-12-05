@@ -38,18 +38,14 @@ def split(grid : Grid, random = False):
 def merge(grid: Grid, random=False) :
     poss_merges = []
     vertical, horizontal = grid.get_lists_to_merge()
-    print(f"verct: {vertical}, hor: {horizontal}")
+    # print(f"verct: {vertical}, hor: {horizontal}")
 
     for ids in vertical:
-        print(ids)
         state = grid.get_potential_grid_state(ids[0], ids[1], True, split=False) #True means: vertical = True
-        print(state)
         if state.is_valid:
             poss_merges.append((ids[0], ids[1], True, state.Mond_score))
     for ids in horizontal:
         state = grid.get_potential_grid_state(ids[0], ids[1], False, split=False)
-        print(state)
-        print(ids)
         if state.is_valid:
             poss_merges.append((ids[0], ids[1], False, state.Mond_score))
 

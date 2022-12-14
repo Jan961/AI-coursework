@@ -58,7 +58,6 @@ class Grid:
         return GridState(no_rectangles, Mondrian, valid)
 
     # I started too late to have time to think how to optimise the below function
-
     # here and in all other functions below horizontal merge means, perhaps counterintuitively,
     # that the dividing line that disappears when the rectangles are merged is horizontal
     #and likewise for vertical
@@ -168,7 +167,7 @@ class Grid:
         ax.set_xticklabels(labels)
         ax.set_yticklabels(labels)
 
-        my_cmap = matplotlib.cm.get_cmap('gist_rainbow')
+        my_cmap = matplotlib.cm.get_cmap('gist_ncar')
         ax.imshow(self.grid, vmin=0, vmax=self.no_rectangles -1, cmap=my_cmap)
         plt.show()
 
